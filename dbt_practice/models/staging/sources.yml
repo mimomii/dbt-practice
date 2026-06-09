@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: tpcds
+    database: SNOWFLAKE_SAMPLE_DATA
+    schema: TPCDS_SF10TCL
+    tables:
+      - name: CUSTOMER
+      - name: STORE_SALES
+      - name: ITEM
+      - name: DATE_DIM

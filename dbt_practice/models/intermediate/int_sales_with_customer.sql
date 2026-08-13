@@ -4,6 +4,7 @@ select
     ss.quantity,
     ss.sales_price,
     ss.net_paid,
+    c.customer_id,
     c.first_name,
     c.last_name,
     i.item_desc,

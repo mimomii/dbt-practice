@@ -40,3 +40,11 @@ models:
               arguments:
                 to: ref('stg_item')
                 field: item_sk
+
+  - name: stg_store_sales_incremental
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - ticket_number
+              - item_sk

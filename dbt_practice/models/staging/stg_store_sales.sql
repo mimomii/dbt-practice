@@ -1,5 +1,10 @@
 with source as (
     select * from {{ source('tpcds', 'STORE_SALES') }}
+    where ss_sold_date_sk in (
+        select d_date_sk
+        from {{ source('tpcds', 'DATE_DIM') }}
+        where d_year = 2002
+    )
 ),
 
 renamed as (

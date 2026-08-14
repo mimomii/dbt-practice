@@ -6,6 +6,7 @@ select
     sum(quantity) as total_quantity,
     count(distinct ticket_number) as order_count 
 from {{ ref('int_sales_with_customer') }}
+where customer_id is not null
 group by
     customer_id,
     first_name,

@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: stg_customer
+    columns:
+      - name: customer_sk
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_item
+    columns:
+      - name: item_sk
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_date_dim
+    columns:
+      - name: date_sk
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_store_sales
+    columns:
+      - name: customer_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_customer')
+                field: customer_sk
+      - name: item_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_item')
+                field: item_sk

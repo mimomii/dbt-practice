@@ -3,7 +3,7 @@ with source as (
     where ss_sold_date_sk in (
         select d_date_sk
         from {{ source('tpcds', 'DATE_DIM') }}
-        where d_year = 2002
+        where d_date = '2002-01-03'
     )
 ),
 

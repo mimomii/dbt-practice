@@ -31,10 +31,12 @@ models:
       - name: customer_sk
         data_tests:
           - relationships:
-              to: ref('stg_customer')
-              field: customer_sk
+              arguments:
+                to: ref('stg_customer')
+                field: customer_sk
       - name: item_sk
         data_tests:
           - relationships:
-              to: ref('stg_item')
-              field: item_sk
+              arguments:
+                to: ref('stg_item')
+                field: item_sk

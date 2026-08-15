@@ -2,10 +2,15 @@ version: 2
 
 sources:
   - name: tpcds
+    description: "Snowflakeが提供するTPC-DSベンチマーク用サンプルデータ（小売業の取引データ）。SNOWFLAKE_SAMPLE_DATA.TPCDS_SF10TCLスキーマを参照する。"
     database: SNOWFLAKE_SAMPLE_DATA
     schema: TPCDS_SF10TCL
     tables:
       - name: CUSTOMER
+        description: "顧客マスタ。顧客ごとの氏名・メールアドレスなどの属性を保持する。"
       - name: STORE_SALES
+        description: "店舗売上のトランザクション明細。1行が商品1点分の購入明細に対応する。"
       - name: ITEM
+        description: "商品マスタ。商品ごとの価格・カテゴリ・ブランドなどの属性を保持する。"
       - name: DATE_DIM
+        description: "日付ディメンション。日次の年・月・日などの属性を保持する。"

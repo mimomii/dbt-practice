@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: int_sales_with_customer
+    description: "店舗売上明細（stg_store_sales）に顧客情報（stg_customer）と商品情報（stg_item）をLEFT JOINしたモデル。"
+    columns:
+      - name: sold_date_sk
+        description: "売上が発生した日付のサロゲートキー。"
+      - name: ticket_number
+        description: "レシート（取引）番号。"
+      - name: quantity
+        description: "購入数量。"
+      - name: sales_price
+        description: "販売単価。"
+      - name: net_paid
+        description: "顧客が実際に支払った金額。"
+      - name: customer_id
+        description: "顧客の自然キー。該当する顧客が見つからない場合はNULL。"
+      - name: first_name
+        description: "顧客の名。"
+      - name: last_name
+        description: "顧客の姓。"
+      - name: item_desc
+        description: "商品の説明。"
+      - name: category
+        description: "商品カテゴリ。"
+      - name: brand
+        description: "商品ブランド。"
+
+  - name: int_daily_sales
+    description: "店舗売上明細（stg_store_sales）を日付ディメンション（stg_date_dim）とJOINし、日別に売上金額・数量・件数を集計したモデル。"
+    columns:
+      - name: date_day
+        description: "売上日（日付型）。"
+      - name: year
+        description: "売上年。"
+      - name: month_of_year
+        description: "売上月（1〜12）。"
+      - name: total_net_paid
+        description: "当日の支払金額の合計。"
+      - name: total_quantity
+        description: "当日の購入数量の合計。"
+      - name: order_count
+        description: "当日の明細行数。"

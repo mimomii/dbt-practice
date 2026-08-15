@@ -37,3 +37,10 @@ models:
       +materialized: view
     marts:
       +materialized: view
+
+# stg_store_sales_incremental が参照するvar。--vars未指定でも
+# dbt compile/docs generateなどが通るようデフォルト値を設定する。
+# ステップ5の段階実行で最後に使った値（2452280 = 2002-01-05まで取り込み済み）。
+# 差分取り込みを試す場合はコマンド実行時に --vars '{max_date_sk: <値>}' で上書きする。
+vars:
+  max_date_sk: 2452280

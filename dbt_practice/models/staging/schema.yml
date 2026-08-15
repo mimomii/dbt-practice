@@ -2,39 +2,49 @@ version: 2
 
 models:
   - name: stg_customer
+    description: "顧客マスタ。CUSTOMER ソーステーブルの主要カラムをリネームした1:1モデル。"
     columns:
       - name: customer_sk
+        description: "{{ doc('surrogate_key') }}"
         data_tests:
           - unique
           - not_null
       - name: customer_id
+        description: "顧客の自然キー（ビジネス上のID）。"
         data_tests:
           - unique
           - not_null
 
   - name: stg_item
+    description: "商品マスタ。ITEM ソーステーブルの主要カラムをリネームした1:1モデル。"
     columns:
       - name: item_sk
+        description: "{{ doc('surrogate_key') }}"
         data_tests:
           - unique
           - not_null
 
   - name: stg_date_dim
+    description: "日付ディメンション。DATE_DIM ソーステーブルの主要カラムをリネームした1:1モデル。"
     columns:
       - name: date_sk
+        description: "{{ doc('surrogate_key') }}"
         data_tests:
           - unique
           - not_null
 
   - name: stg_store_sales
+    description: "店舗売上明細。STORE_SALES ソーステーブルのうち2002-01-03分のみを抽出し、コスト削減のため日付でフィルタしたモデル。"
     columns:
       - name: customer_sk
+        description: "購入した顧客のサロゲートキー。stg_customerへの外部キー。"
         data_tests:
           - relationships:
               arguments:
                 to: ref('stg_customer')
                 field: customer_sk
       - name: item_sk
+        description: "購入された商品のサロゲートキー。stg_itemへの外部キー。"
         data_tests:
           - relationships:
               arguments:
@@ -42,6 +52,7 @@ models:
                 field: item_sk
 
   - name: stg_store_sales_incremental
+    description: "{{ doc('stg_store_sales_incremental') }}"
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

@@ -1,0 +1,33 @@
+version: 2
+
+macros:
+  - name: store_sales_columns
+    description: >
+      STORE_SALES のカラムリネーム定義。
+      stg_store_sales と stg_store_sales_incremental で重複していたため共通化した。
+
+  - name: limit_by_date_range
+    description: >
+      コスト対策として date_sk カラムを指定範囲に絞り込む where句断片。
+      STORE_SALES のような巨大テーブルのフルスキャンを防ぐために使う。
+    arguments:
+      - name: date_column
+        type: string
+        description: 絞り込み対象の date_sk カラム名
+      - name: start_date_sk
+        type: integer
+        description: 絞り込み範囲の開始 date_sk
+      - name: end_date_sk
+        type: integer
+        description: 絞り込み範囲の終了 date_sk
+
+  - name: round_money
+    description: >
+      金額カラムの表示桁数を揃える共通マクロ。
+    arguments:
+      - name: column_name
+        type: string
+        description: 丸め対象のカラム名または集計式
+      - name: decimal_places
+        type: integer
+        description: 小数点以下の桁数（デフォルト2）

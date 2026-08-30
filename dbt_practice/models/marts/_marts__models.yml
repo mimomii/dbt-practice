@@ -1,8 +1,8 @@
 version: 2
 
 models:
-  - name: mart_customer_summary
-    description: "顧客別の購買サマリー。int_sales_with_customerをcustomer_idでグループ化し、合計支払額・合計数量・注文件数を算出したtableモデル。customer_idがNULLの行（顧客不明の売上）は除外している。"
+  - name: fct_customer_summary
+    description: "顧客別の購買サマリー。int_store_sales_enrichedをcustomer_idでグループ化し、合計支払額・合計数量・注文件数を算出したtableモデル。customer_idがNULLの行（顧客不明の売上）は除外している。"
     columns:
       - name: customer_id
         description: "顧客の自然キー。"
@@ -20,8 +20,8 @@ models:
       - name: order_count
         description: "当該顧客の注文件数（ticket_numberの重複除去件数）。"
 
-  - name: mart_monthly_sales
-    description: "月別売上サマリー。int_daily_salesを年・月でグループ化し、合計支払額・合計数量・件数を算出したtableモデル。"
+  - name: fct_monthly_sales
+    description: "月別売上サマリー。int_store_sales_aggregated_to_dayを年・月でグループ化し、合計支払額・合計数量・件数を算出したtableモデル。"
     columns:
       - name: year
         description: "売上年。"

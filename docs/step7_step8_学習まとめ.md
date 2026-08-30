@@ -151,4 +151,113 @@ macros:
 
 ## ステップ8: incrementalの発展とephemeral
 
-（未着手。実施後にこのセクションへ追記する）
+### 目的
+
+差分更新戦略のバリエーションと軽量な中間モデルの使い所を覚える。
+
+### Part A: incremental_strategyの比較（merge vs delete+insert）
+
+`stg_store_sales_incremental`を対象に、`incremental_strategy`を明示指定して2種類の戦略を比較した。
+
+#### incremental_strategyとは
+
+dbtのincrementalマテリアライゼーションは「新しい行だけを既存テーブルに反映する」という考え方だが、**その反映の仕方（SQL文の組み立て方）**には複数の実装方式がある。これが`incremental_strategy`。
+
+**merge（Snowflakeのデフォルト）**
+
+```sql
+merge into 本番テーブル as DEST
+using 差分バッチの一時テーブル as SRC
+on (DEST.ticket_number = SRC.ticket_number) and (DEST.item_sk = SRC.item_sk)
+when matched then update set ...   -- キーが一致する行は上書き
+when not matched then insert ...   -- 一致しない行は新規追加
+```
+
+`unique_key`で指定したキーが一致するかどうかを1つのSQL文の中で判定し、一致すればUPDATE、しなければINSERTを行う。1トランザクションで完結し、SnowflakeのようなMERGE文最適化が効くDBでは標準的な選択。
+
+**delete+insert**
+
+```sql
+delete from 本番テーブル where (ticket_number, item_sk) in (差分バッチに含まれるキー一覧);
+insert into 本番テーブル select * from 差分バッチの一時テーブル;
+```
+
+判定と反映を2つのSQL文に分けて行う。「キーが一致する行を消してから、新しいデータを丸ごと入れ直す」という考え方で、MERGE文をうまくサポートしない・パフォーマンスが出ないDB向けの互換性重視の戦略として用意されている。
+
+#### 検証手順
+
+1. `config`に`incremental_strategy='merge'`を明示指定
+2. `--full-refresh`→`--vars '{max_date_sk: 2452278}'`で初回実行→`{max_date_sk: 2452280}`で差分実行
+3. `target/run/`配下の実行SQLを確認 →`merge into ... when matched ... when not matched ...`の1文構成
+4. `incremental_strategy='delete+insert'`に変更し、同じ手順（full-refresh→初回→差分）を再実施
+5. `target/run/`配下の実行SQLを確認 →`delete from ... where (ticket_number, item_sk) in (...)`→`insert into ...`の2文構成
+6. `dbt show --inline "select count(*) from {{ ref('stg_store_sales_incremental') }}"`で行数を比較
+7. `merge`に戻して`--full-refresh`＋`dbt test`で最終確定
+
+#### 結果
+
+| ストラテジー | 実行SQLの構成 | 最終行数 |
+|---|---|---|
+| `merge` | `MERGE INTO`1文（`when matched`/`when not matched`） | 39,001 |
+| `delete+insert` | `DELETE`→`INSERT`の2文 | 39,001 |
+
+両ストラテジーで最終行数は一致した。最終的に`merge`を採用して確定。
+
+#### なぜ今回、両方とも最終行数が同じだったのか
+
+今回のデータは「新しい日付の行が追加されるだけ」で、既存の行の中身が変わる更新（同じキーで値だけ変わるケース）は発生しない。そのため、`merge`は該当キーが存在せず全て`insert`側の処理になり、`delete+insert`も削除対象がなく実質`insert`だけが効く状態になる。**今回のシナリオでは挙動の差が結果に表れなかった**。両者の違いが実際に効いてくるのは「既存キーの値そのものが変わる更新（例: 後から金額が修正された等）」があるケース。
+
+#### dbtが裏で行っていること（`__dbt_tmp`）
+
+実行SQLを見ると、`stg_store_sales_incremental__dbt_tmp`という一時テーブルが登場する。dbtはモデルのSELECT文（差分抽出クエリ）の結果を一旦この一時テーブルに書き出し、それを`merge`または`delete+insert`で本番テーブルに反映する、という2段階の仕組みになっている。
+
+### Part B: ephemeral化
+
+`int_store_sales_enriched`（stg_store_salesにcustomer・itemをLEFT JOINするだけの単純なモデルで、`fct_customer_summary`からしか参照されていない）を対象にephemeral化した。
+
+#### ephemeralとは
+
+`view`や`table`のようにSnowflake上に実体（オブジェクト）を作らず、参照元のモデルのSQLに**CTEとして埋め込まれる**マテリアライゼーション。単独では実行できず（実体を持たないため）、必ず依存先のモデル経由でのみコンパイル・実行される。
+
+```sql
+{{ config(materialized='ephemeral') }}
+
+select
+    ss.sold_date_sk,
+    ...
+```
+
+#### 検証結果
+
+`dbt compile --select fct_customer_summary`の結果、`int_store_sales_enriched`が独立したview参照ではなく`__dbt__cte__int_store_sales_enriched`という名前のCTEとして展開された。
+
+```sql
+with __dbt__cte__int_store_sales_enriched as (
+    select
+        ss.sold_date_sk,
+        ...
+    from DBT_PRACTICE.DEV.stg_store_sales ss
+    left join DBT_PRACTICE.DEV.stg_customers c
+        on ss.customer_sk = c.customer_sk
+    left join DBT_PRACTICE.DEV.stg_items i
+        on ss.item_sk = i.item_sk
+) select
+    customer_id,
+    ...
+from __dbt__cte__int_store_sales_enriched
+where customer_id is not null
+group by ...
+```
+
+`dbt run --select int_store_sales_enriched`を単独実行すると、対象0件で何も作成されずに終了することを確認した（`Finished running  in ...`のようにモデル種別の記載自体がなく、`view`/`table`のように「作成された」というログが一切出ない）。
+
+一方、`dbt run --select fct_customer_summary` / `dbt test --select fct_customer_summary`は問題なく成功し、全テストPASSした。
+
+#### ephemeralの利点・制約
+
+- **利点**: Snowflake上にオブジェクトを作らないため、ストレージやメタデータ管理の対象が減る。単純なJOIN・フィルタなど「それ自体を直接クエリしたいわけではない中間ステップ」に向く
+- **制約**: 単独でクエリ・デバッグできない（依存先のコンパイル結果の中でしか実体を見られない）。複数のモデルから参照されるephemeralモデルがある場合、参照される都度CTEとして重複展開されるため、重い処理をephemeral化すると逆に非効率になりうる（今回のように単純なJOINで参照元が1つだけ、という条件が向いている）
+
+#### 後片付け
+
+ephemeral化した時点でSnowflake上にviewとして作る対象ではなくなるため、既存の`int_store_sales_enriched`view（リネーム直後の検証で作成したもの）をSnowsightから手動`drop view`した。

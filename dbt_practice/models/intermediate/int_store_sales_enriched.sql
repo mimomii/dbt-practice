@@ -1,3 +1,5 @@
+{{ config(materialized='ephemeral') }}
+
 select
     ss.sold_date_sk,
     ss.ticket_number,

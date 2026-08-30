@@ -1,4 +1,5 @@
-{{ config(materialized='incremental', unique_key=['ticket_number', 'item_sk']) }}
+{{ config(materialized='incremental', unique_key=['ticket_number', 'item_sk'], incremental_strategy='merge') }}
+
 
 with source as (
     select * from {{ source('tpcds', 'STORE_SALES') }}

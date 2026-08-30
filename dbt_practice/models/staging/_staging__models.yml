@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: stg_customer
+  - name: stg_customers
     description: "顧客マスタ。CUSTOMER ソーステーブルの主要カラムをリネームした1:1モデル。"
     columns:
       - name: customer_sk
@@ -15,7 +15,7 @@ models:
           - unique
           - not_null
 
-  - name: stg_item
+  - name: stg_items
     description: "商品マスタ。ITEM ソーステーブルの主要カラムをリネームした1:1モデル。"
     columns:
       - name: item_sk
@@ -37,18 +37,18 @@ models:
     description: "店舗売上明細。STORE_SALES ソーステーブルのうち2002-01-03分のみを抽出し、コスト削減のため日付でフィルタしたモデル。"
     columns:
       - name: customer_sk
-        description: "購入した顧客のサロゲートキー。stg_customerへの外部キー。"
+        description: "購入した顧客のサロゲートキー。stg_customersへの外部キー。"
         data_tests:
           - relationships:
               arguments:
-                to: ref('stg_customer')
+                to: ref('stg_customers')
                 field: customer_sk
       - name: item_sk
-        description: "購入された商品のサロゲートキー。stg_itemへの外部キー。"
+        description: "購入された商品のサロゲートキー。stg_itemsへの外部キー。"
         data_tests:
           - relationships:
               arguments:
-                to: ref('stg_item')
+                to: ref('stg_items')
                 field: item_sk
 
   - name: stg_store_sales_incremental

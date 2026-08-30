@@ -1,8 +1,8 @@
 version: 2
 
 models:
-  - name: int_sales_with_customer
-    description: "店舗売上明細（stg_store_sales）に顧客情報（stg_customer）と商品情報（stg_item）をLEFT JOINしたモデル。"
+  - name: int_store_sales_enriched
+    description: "店舗売上明細（stg_store_sales）に顧客情報（stg_customers）と商品情報（stg_items）をLEFT JOINしたモデル。"
     columns:
       - name: sold_date_sk
         description: "売上が発生した日付のサロゲートキー。"
@@ -27,7 +27,7 @@ models:
       - name: brand
         description: "商品ブランド。"
 
-  - name: int_daily_sales
+  - name: int_store_sales_aggregated_to_day
     description: "店舗売上明細（stg_store_sales）を日付ディメンション（stg_date_dim）とJOINし、日別に売上金額・数量・件数を集計したモデル。"
     columns:
       - name: date_day

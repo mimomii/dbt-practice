@@ -11,7 +11,7 @@ select
     i.category,
     i.brand
 from {{ ref('stg_store_sales') }} ss
-left join {{ ref('stg_customer') }} c
+left join {{ ref('stg_customers') }} c
     on ss.customer_sk = c.customer_sk
-left join {{ ref('stg_item') }} i
+left join {{ ref('stg_items') }} i
     on ss.item_sk = i.item_sk
